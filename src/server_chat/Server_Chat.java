@@ -234,11 +234,11 @@ public class Server_Chat extends JFrame {
 
     private void UsersButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_UsersButtonActionPerformed
         Iterator it = clientOutput.iterator();
-        ServerUsersArea.append("\n Online users : \n");
+
         while (it.hasNext()){
             Object current_user = it.next();
-            ServerUsersArea.append((String) current_user);
-            ServerUsersArea.append("\n");
+            ServerUsersArea.setText((String) current_user);
+            ServerUsersArea.setText("\n");
         }
     }//GEN-LAST:event_UsersButtonActionPerformed
 
