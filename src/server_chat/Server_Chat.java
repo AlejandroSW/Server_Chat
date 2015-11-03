@@ -153,6 +153,8 @@ public class Server_Chat extends JFrame {
         );
 
         setDefaultCloseOperation(javax.swing.WindowConstants.EXIT_ON_CLOSE);
+        setMaximumSize(getPreferredSize());
+        setMinimumSize(getPreferredSize());
 
         ServerActionArea.setColumns(20);
         ServerActionArea.setRows(5);
