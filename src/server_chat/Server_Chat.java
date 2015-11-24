@@ -11,11 +11,8 @@ import javax.swing.*;
  */
 public class Server_Chat extends JFrame {
     
-    private ObjectOutputStream output;
-    private ObjectInputStream input;
     private ServerSocket server;
     private Socket connection;
-    private LinkedList clientOutput;
     private LinkedList clientList;
     
     public class ServerStart implements Runnable{
@@ -23,23 +20,22 @@ public class Server_Chat extends JFrame {
         @Override
         public void run()
         {
-            clientOutput = new LinkedList();
+            clientList = new LinkedList();
             
             try {
             server = new ServerSocket(2222, 50);
 
-                while(true){
+                while(true)
+                {
                     try{
                         //Start listening
                         ServerActionArea.append(" Waiting for someone to connect... \n");
                         connection = server.accept();
                         ServerActionArea.append(" Got a connection \n");
                         //Create new client
-                        output = new ObjectOutputStream(connection.getOutputStream());
-                        clientOutput.add(output);
-                        output.flush();
-                        Thread client = new Thread(new ClientCreator(connection, output));
-                        client.start();
+                        ClientCreator client = new ClientCreator(connection);
+                        clientList.add(client);
+                        (new Thread(client)).start();
                     }catch(EOFException eofException){
 
                     }
@@ -50,19 +46,22 @@ public class Server_Chat extends JFrame {
         }
     }
     
-    public class ClientCreator implements Runnable {
+    public class ClientCreator implements Runnable {    
         
-        Socket client;
+        Socket connection;
+        ObjectInputStream  input;
+        ObjectOutputStream output;
         String username;
 
         //Constructor
-        ClientCreator(Socket connection, ObjectOutputStream output) {
+        ClientCreator(Socket conn) {
             
-            client = connection;
-            
-            try {    
-                input = new ObjectInputStream(client.getInputStream());
-                String anon="anon";
+            try { 
+                connection = conn;
+                input = new ObjectInputStream(connection.getInputStream());
+                output = new ObjectOutputStream(connection.getOutputStream());
+                //Create anonimous nickname
+                String anon=" anon";
                 Random generator = new Random(); 
                 int a = generator.nextInt(999);
                 String num = String.valueOf(a);
@@ -74,17 +73,20 @@ public class Server_Chat extends JFrame {
         }
 
         @Override
-        public void run(){
-            
+        public void run(){       
             String message;
             
             try {                
                 while(((message = (String)input.readObject())) != null)
                 {
+                    message = username + ": " + message;
                     sendMessage(message);
-                    if (message.equals(" USERNAME: is Disconnecting "))
+                    if (message.equals(username + ": is Disconnecting "))
                     {
-                        clientOutput.remove(output);
+                        input.close();
+                        output.close();
+                        connection.close();
+                        clientList.remove(this);
                     }
                 }
             } catch (IOException | ClassNotFoundException ex) {
@@ -95,14 +97,18 @@ public class Server_Chat extends JFrame {
     
     private void sendMessage(String message){
         
-        Iterator it = clientOutput.iterator();
+        Iterator it = clientList.iterator();
+        ClientCreator client;
         
-        while(it.hasNext()){
+        
+        while(it.hasNext())
+        {
             try{
+                
                 ServerActionArea.append(" Sending: " + message + "\n");
-                ObjectOutputStream out = (ObjectOutputStream) it.next();
-                out.writeObject(message);
-                out.flush();
+                client = (ClientCreator) it.next();
+                client.output.writeObject(message);
+                client.output.flush();
             }catch(IOException ioException){
 
             }            
@@ -112,12 +118,15 @@ public class Server_Chat extends JFrame {
     private void closeConnection(){
         sendMessage(" The Server is shutting all connections... ");
         ServerActionArea.append(" Closing connections... \n");
+        Iterator it = clientList.iterator();
+        ClientCreator client;
+        
         try{
-            clientOutput.removeAll(clientOutput);
-            output.close();
-            input.close();
-            connection.close();
-            server.close();
+            client = (ClientCreator) it.next();
+            client.input.close();
+            client.output.close();
+            client.connection.close();
+            it.remove();
         }catch(IOException ioException){
             
         }
@@ -235,12 +244,14 @@ public class Server_Chat extends JFrame {
     }//GEN-LAST:event_ConnectionButtonActionPerformed
 
     private void UsersButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_UsersButtonActionPerformed
-        Iterator it = clientOutput.iterator();
+        Iterator it = clientList.iterator();
+        ClientCreator client;
+        ServerUsersArea.setText("");
 
-        while (it.hasNext()){
-            Object current_user = it.next();
-            ServerUsersArea.setText((String) current_user);
-            ServerUsersArea.setText("\n");
+        while (it.hasNext())
+        {
+            client = (ClientCreator) it.next();
+            ServerUsersArea.append(client.username + "\n");
         }
     }//GEN-LAST:event_UsersButtonActionPerformed
 
