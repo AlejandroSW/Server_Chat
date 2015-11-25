@@ -4,6 +4,8 @@ import java.awt.*;
 import java.io.*;
 import java.net.*;
 import java.util.*;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 import javax.swing.*;
 /**
  *
@@ -35,7 +37,8 @@ public class Server_Chat extends JFrame {
                         //Create new client
                         ClientCreator client = new ClientCreator(connection);
                         clientList.add(client);
-                        (new Thread(client)).start();
+                        Thread clientStarter = new Thread(client);
+                        clientStarter.start();
                     }catch(EOFException eofException){
 
                     }
@@ -52,6 +55,8 @@ public class Server_Chat extends JFrame {
         ObjectInputStream  input;
         ObjectOutputStream output;
         String username;
+        String[] data;
+        String welcome;
 
         //Constructor
         ClientCreator(Socket conn) {
@@ -59,15 +64,11 @@ public class Server_Chat extends JFrame {
             try { 
                 connection = conn;
                 input = new ObjectInputStream(connection.getInputStream());
-                output = new ObjectOutputStream(connection.getOutputStream());
-                //Create anonimous nickname
-                String anon=" anon";
-                Random generator = new Random(); 
-                int a = generator.nextInt(999);
-                String num = String.valueOf(a);
-                anon=anon.concat(num);
-                username=anon;
-            } catch (IOException ex) {
+                output = new ObjectOutputStream(connection.getOutputStream()); 
+                welcome = (String)input.readObject();
+                data = welcome.split(":");
+                username = data[0];
+            } catch (IOException | ClassNotFoundException ex) {
                 
             }
         }
@@ -79,10 +80,9 @@ public class Server_Chat extends JFrame {
             try {                
                 while(((message = (String)input.readObject())) != null)
                 {
-                    message = username + ": " + message;
                     sendMessage(message);
-                    if (message.equals(username + ": is Disconnecting "))
-                    {
+                    if (message.equals(" " + username + ": is Disconnecting "))
+                    {        
                         input.close();
                         output.close();
                         connection.close();
