@@ -81,7 +81,8 @@ public class Server_Chat extends JFrame {
                 while(((message = (String)input.readObject())) != null)
                 {
                     sendMessage(message);
-                    if (message.equals(" " + username + ": is Disconnecting "))
+                    data = message.split(":");
+                    if (data[1].equals(" is Disconnecting "))
                     {        
                         input.close();
                         output.close();
