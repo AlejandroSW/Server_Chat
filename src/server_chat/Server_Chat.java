@@ -4,8 +4,6 @@ import java.awt.*;
 import java.io.*;
 import java.net.*;
 import java.util.*;
-import java.util.logging.Level;
-import java.util.logging.Logger;
 import javax.swing.*;
 /**
  *
@@ -15,6 +13,8 @@ public class Server_Chat extends JFrame {
     
     private ServerSocket server;
     private Socket connection;
+    /*private ServerSocket server2;
+    private Socket connection2;*/
     private LinkedList clientList;
     
     public class ServerStart implements Runnable{
@@ -26,6 +26,7 @@ public class Server_Chat extends JFrame {
             
             try {
             server = new ServerSocket(2222, 50);
+            //server2 = new ServerSocket(2223, 50);
 
                 while(true)
                 {
@@ -34,9 +35,17 @@ public class Server_Chat extends JFrame {
                         ServerActionArea.append(" Waiting for someone to connect... \n");
                         connection = server.accept();
                         ServerActionArea.append(" Got a connection \n");
+                        
+                        //Start listening 2
+                        /*ServerActionArea.append(" Waiting for second connection... \n");
+                        connection2 = server2.accept();
+                        ServerActionArea.append(" Got a connection \n");*/
+                        
                         //Create new client
-                        ClientCreator client = new ClientCreator(connection);
+                        ClientCreator client = new ClientCreator(connection/*, connection2*/);
                         clientList.add(client);
+                        
+                        //Start a new thread
                         Thread clientStarter = new Thread(client);
                         clientStarter.start();
                     }catch(EOFException eofException){
@@ -52,19 +61,30 @@ public class Server_Chat extends JFrame {
     public class ClientCreator implements Runnable {    
         
         Socket connection;
+        Socket connection2;
         ObjectInputStream  input;
         ObjectOutputStream output;
+        InputStreamReader  input2;
+        ObjectOutputStream output2;
         String username;
         String[] data;
         String welcome;
 
         //Constructor
-        ClientCreator(Socket conn) {
+        ClientCreator(Socket conn/*, Socket conn2*/) {
             
             try { 
+                //Message streams and socket
                 connection = conn;
                 input = new ObjectInputStream(connection.getInputStream());
-                output = new ObjectOutputStream(connection.getOutputStream()); 
+                output = new ObjectOutputStream(connection.getOutputStream());
+                
+                //Command streams and socket
+                /*connection2 = conn2;
+                input2 = new InputStreamReader(connection2.getInputStream());
+                output2 = new ObjectOutputStream(connection2.getOutputStream());*/ 
+                
+                //Welcome input message from client to resolve its nickname
                 welcome = (String)input.readObject();
                 data = welcome.split(":");
                 username = data[0];
@@ -76,14 +96,39 @@ public class Server_Chat extends JFrame {
         @Override
         public void run(){       
             String message;
+            //String command;
             
             try {                
-                while(((message = (String)input.readObject())) != null)
+                while((message = (String)input.readObject()) != null)
                 {
+                    //command = (String)input.readObject();
+                    
+                    /*if (command.equals("Disconnect"))
+                    {
+                        sendMessage(message);
+                        
+                        //Close message streams and socket
+                        output.close();
+                        input.close();
+                        connection.close();
+                        
+                        //Close command streams and socket
+                        output2.close();
+                        input2.close();
+                        connection2.close();
+                        
+                        //Remove client from the list
+                        clientList.remove(this);
+                    }else
+                    {
+                        sendMessage(message);
+                    }*/                  
+                    
                     sendMessage(message);
                     data = message.split(":");
                     if (data[1].equals(" is Disconnecting "))
-                    {        
+                    {
+                        //Close message streams, socket and remove client from list
                         input.close();
                         output.close();
                         connection.close();
@@ -96,16 +141,13 @@ public class Server_Chat extends JFrame {
         }
     }
     
-    private void sendMessage(String message){
-        
+    private void sendMessage(String message){        
         Iterator it = clientList.iterator();
-        ClientCreator client;
-        
+        ClientCreator client;        
         
         while(it.hasNext())
         {
-            try{
-                
+            try{                
                 ServerActionArea.append(" Sending: " + message + "\n");
                 client = (ClientCreator) it.next();
                 client.output.writeObject(message);
@@ -116,7 +158,7 @@ public class Server_Chat extends JFrame {
         }
     }
     
-    private void closeConnection(){
+    private void closeConnection(){        
         sendMessage(" The Server is shutting all connections... ");
         ServerActionArea.append(" Closing connections... \n");
         Iterator it = clientList.iterator();
@@ -124,9 +166,18 @@ public class Server_Chat extends JFrame {
         
         try{
             client = (ClientCreator) it.next();
+            
+            //Close message streams and socket
             client.input.close();
             client.output.close();
             client.connection.close();
+            
+            //Close command streams and socket
+            /*client.input2.close();
+            client.output2.close();
+            client.connection2.close();*/
+            
+            //Remove client from the list
             it.remove();
         }catch(IOException ioException){
             
@@ -257,7 +308,6 @@ public class Server_Chat extends JFrame {
     }//GEN-LAST:event_UsersButtonActionPerformed
 
     public static void main(String args[]) {
-
         try {
             for (javax.swing.UIManager.LookAndFeelInfo info : javax.swing.UIManager.getInstalledLookAndFeels()) {
                 if ("Nimbus".equals(info.getName())) {
