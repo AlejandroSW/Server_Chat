@@ -13,8 +13,6 @@ public class Server_Chat extends JFrame {
     
     private ServerSocket server;
     private Socket connection;
-    /*private ServerSocket server2;
-    private Socket connection2;*/
     private LinkedList clientList;
     
     public class ServerStart implements Runnable{
@@ -26,7 +24,6 @@ public class Server_Chat extends JFrame {
             
             try {
             server = new ServerSocket(2222, 50);
-            //server2 = new ServerSocket(2223, 50);
 
                 while(true)
                 {
@@ -35,12 +32,7 @@ public class Server_Chat extends JFrame {
                         ServerActionArea.append(" Waiting for someone to connect... \n");
                         connection = server.accept();
                         ServerActionArea.append(" Got a connection \n");
-                        
-                        //Start listening 2
-                        /*ServerActionArea.append(" Waiting for second connection... \n");
-                        connection2 = server2.accept();
-                        ServerActionArea.append(" Got a connection \n");*/
-                        
+
                         //Create new client
                         ClientCreator client = new ClientCreator(connection/*, connection2*/);
                         clientList.add(client);
@@ -79,11 +71,6 @@ public class Server_Chat extends JFrame {
                 input = new ObjectInputStream(connection.getInputStream());
                 output = new ObjectOutputStream(connection.getOutputStream());
                 
-                //Command streams and socket
-                /*connection2 = conn2;
-                input2 = new InputStreamReader(connection2.getInputStream());
-                output2 = new ObjectOutputStream(connection2.getOutputStream());*/ 
-                
                 //Welcome input message from client to resolve its nickname
                 welcome = (String)input.readObject();
                 data = welcome.split(":");
@@ -100,30 +87,7 @@ public class Server_Chat extends JFrame {
             
             try {                
                 while((message = (String)input.readObject()) != null)
-                {
-                    //command = (String)input.readObject();
-                    
-                    /*if (command.equals("Disconnect"))
-                    {
-                        sendMessage(message);
-                        
-                        //Close message streams and socket
-                        output.close();
-                        input.close();
-                        connection.close();
-                        
-                        //Close command streams and socket
-                        output2.close();
-                        input2.close();
-                        connection2.close();
-                        
-                        //Remove client from the list
-                        clientList.remove(this);
-                    }else
-                    {
-                        sendMessage(message);
-                    }*/                  
-                    
+                {                                    
                     sendMessage(message);
                     data = message.split(":");
                     if (data[1].equals(" is Disconnecting "))
@@ -171,11 +135,6 @@ public class Server_Chat extends JFrame {
             client.input.close();
             client.output.close();
             client.connection.close();
-            
-            //Close command streams and socket
-            /*client.input2.close();
-            client.output2.close();
-            client.connection2.close();*/
             
             //Remove client from the list
             it.remove();
