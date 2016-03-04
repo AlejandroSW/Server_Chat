@@ -34,7 +34,7 @@ public class Server_Chat extends JFrame {
                         ServerActionArea.append(" Got a connection \n");
 
                         //Create new client
-                        ClientCreator client = new ClientCreator(connection/*, connection2*/);
+                        ClientCreator client = new ClientCreator(connection);
                         clientList.add(client);
                         
                         //Start a new thread
@@ -53,17 +53,14 @@ public class Server_Chat extends JFrame {
     public class ClientCreator implements Runnable {    
         
         Socket connection;
-        Socket connection2;
         ObjectInputStream  input;
         ObjectOutputStream output;
-        InputStreamReader  input2;
-        ObjectOutputStream output2;
         String username;
         String[] data;
         String welcome;
 
         //Constructor
-        ClientCreator(Socket conn/*, Socket conn2*/) {
+        ClientCreator(Socket conn) {
             
             try { 
                 //Message streams and socket
@@ -71,11 +68,7 @@ public class Server_Chat extends JFrame {
                 input = new ObjectInputStream(connection.getInputStream());
                 output = new ObjectOutputStream(connection.getOutputStream());
                 
-                //Welcome input message from client to resolve its nickname
-                welcome = (String)input.readObject();
-                data = welcome.split(":");
-                username = data[0];
-            } catch (IOException | ClassNotFoundException ex) {
+            } catch (IOException ex) {
                 
             }
         }
@@ -83,20 +76,30 @@ public class Server_Chat extends JFrame {
         @Override
         public void run(){       
             String message;
-            //String command;
             
             try {                
                 while((message = (String)input.readObject()) != null)
-                {                                    
-                    sendMessage(message);
+                {                                                      
                     data = message.split(":");
-                    if (data[1].equals(" is Disconnecting "))
+                    if (data[0].equals(" CONNECT "))
+                    {
+                        //Welcome input message from client to resolve its nickname
+                        sendMessage(message);
+                        username = data[1];
+                    }
+                    if (data[0].equals(" DISCONNECT "))
                     {
                         //Close message streams, socket and remove client from list
+                        sendMessage(message);
                         input.close();
                         output.close();
                         connection.close();
                         clientList.remove(this);
+                    }
+                    if (data[0].equals(" CHAT "))
+                    {
+                        //Send messajes to other clients
+                        sendMessage(message);
                     }
                 }
             } catch (IOException | ClassNotFoundException ex) {
@@ -123,7 +126,7 @@ public class Server_Chat extends JFrame {
     }
     
     private void closeConnection(){        
-        sendMessage(" The Server is shutting all connections... ");
+        sendMessage(" SERVER.DISCONNECT : The Server is shutting all connections... ");
         ServerActionArea.append(" Closing connections... \n");
         Iterator it = clientList.iterator();
         ClientCreator client;
