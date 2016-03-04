@@ -82,7 +82,7 @@ public class Server_Chat extends JFrame {
                     
                     switch (data[0]) {
                         case " CONNECT ":
-                            //Welcome input message from client to resolve its nickname
+                            //Send user connection message
                             sendMessage(message);
                             username = data[1];
                             break;
