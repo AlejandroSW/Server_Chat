@@ -79,25 +79,25 @@ public class Server_Chat extends JFrame {
                 while((message = (String)input.readObject()) != null)
                 {                                                      
                     data = message.split(":");
-                    if (data[0].equals(" CONNECT "))
-                    {
-                        //Welcome input message from client to resolve its nickname
-                        sendMessage(message);
-                        username = data[1];
-                    }
-                    if (data[0].equals(" DISCONNECT "))
-                    {
-                        //Close message streams, socket and remove client from list
-                        sendMessage(message);
-                        input.close();
-                        output.close();
-                        connection.close();
-                        clientList.remove(this);
-                    }
-                    if (data[0].equals(" CHAT "))
-                    {
-                        //Send messajes to other clients
-                        sendMessage(message);
+                    
+                    switch (data[0]) {
+                        case " CONNECT ":
+                            //Welcome input message from client to resolve its nickname
+                            sendMessage(message);
+                            username = data[1];
+                            break;
+                        case " CHAT ":
+                            //Send messajes to other clients
+                            sendMessage(message);
+                            break;
+                        case " DISCONNECT ":
+                            //Close message streams, socket and remove client from list
+                            sendMessage(message);
+                            input.close();
+                            output.close();
+                            connection.close();
+                            clientList.remove(this);
+                            break;
                     }
                 }
             } catch (IOException | ClassNotFoundException ex) {
