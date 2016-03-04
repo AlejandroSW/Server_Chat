@@ -57,7 +57,6 @@ public class Server_Chat extends JFrame {
         ObjectOutputStream output;
         String username;
         String[] data;
-        String welcome;
 
         //Constructor
         ClientCreator(Socket conn) {
@@ -66,8 +65,7 @@ public class Server_Chat extends JFrame {
                 //Message streams and socket
                 connection = conn;
                 input = new ObjectInputStream(connection.getInputStream());
-                output = new ObjectOutputStream(connection.getOutputStream());
-                
+                output = new ObjectOutputStream(connection.getOutputStream());                
             } catch (IOException ex) {
                 
             }
