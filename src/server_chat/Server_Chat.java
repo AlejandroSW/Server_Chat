@@ -4,6 +4,8 @@ import java.awt.*;
 import java.io.*;
 import java.net.*;
 import java.util.*;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 import javax.swing.*;
 /**
  *
@@ -40,11 +42,11 @@ public class Server_Chat extends JFrame {
                         //Start a new thread
                         Thread clientStarter = new Thread(client);
                         clientStarter.start();
-                    }catch(EOFException eofException){
+                    }catch(EOFException ex){
 
                     }
                 } 
-            }catch (IOException ioException){
+            }catch (IOException ex){
 
             }
         }
@@ -117,29 +119,34 @@ public class Server_Chat extends JFrame {
                 client = (ClientCreator) it.next();
                 client.output.writeObject(message);
                 client.output.flush();
-            }catch(IOException ioException){
+            }catch(IOException ex){
 
             }            
         }
     }
     
-    private void closeConnection(){        
+    private void closeConnection() {        
         sendMessage(" SERVER.DISCONNECT : The Server is shutting all connections... ");
         ServerActionArea.append(" Closing connections... \n");
         Iterator it = clientList.iterator();
         ClientCreator client;
         
         try{
-            client = (ClientCreator) it.next();
+            while (it.hasNext())
+            {
+                client = (ClientCreator) it.next();
             
-            //Close message streams and socket
-            client.input.close();
-            client.output.close();
-            client.connection.close();
+                //Close message streams and socket
+                client.input.close();
+                client.output.close();
+                client.connection.close();
             
-            //Remove client from the list
-            it.remove();
-        }catch(IOException ioException){
+                //Remove client from the list
+                it.remove();
+            }
+            //Close the server socket
+            server.close();
+        }catch(IOException ex){
             
         }
     }
